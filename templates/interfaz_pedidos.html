@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniDelivery - Sistema de Pedidos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍕 UniDelivery</h1>
+            <p>Sistema de Pedidos Universitario</p>
+        </header>
+
+        <div class="pedido-form">
+            <h2>Realizar Nuevo Pedido</h2>
+            <form id="formPedido">
+                <div class="form-group">
+                    <label for="usuario">Usuario:</label>
+                    <input type="text" id="usuario" name="usuario" value="estudiante_001" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="producto">Producto:</label>
+                    <select id="producto" name="producto" required>
+                        <option value="Café Americano">☕ Café Americano</option>
+                        <option value="Café con Leche">☕ Café con Leche</option>
+                        <option value="Caballeros"> 🥖Caballeros</option>
+                        <option value="Empanadas">🥟 Empanadas </option>
+                        <option value="Hamburguesa">🍔 Hamburguesas</option>
+                        <option value="Arepa de Queso">🧀 Arepa de Queso</option>
+                        <option value ="Perros Calientes">🌭 Perros Calientes</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="5" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ubicacion">Ubicación de Entrega:</label>
+                    <select id="ubicacion" name="ubicacion" required>
+                        <option value="Bloque A">🏫 Bloque A</option>
+                        <option value="Bloque B">🏫 Bloque B</option>
+                        <option value="Biblioteca">📚 Biblioteca</option>
+                        <option value="Laboratorios">🔬 Laboratorios</option>
+                        <option value="Administración">🏢 Administración</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-pedido">🎯 Realizar Pedido</button>
+            </form>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <script>
+        document.getElementById('formPedido').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                usuario: formData.get('usuario'),
+                producto: formData.get('producto'),
+                cantidad: formData.get('cantidad'),
+                ubicacion: formData.get('ubicacion')
+            };
+            
+            const button = document.querySelector('.btn-pedido');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            button.disabled = true;
+            button.textContent = 'Procesando...';
+            statusMessage.innerHTML = '⏳ Enviando pedido al sistema...';
+            
+            try {
+                const response = await fetch('/generar-pedido', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    statusMessage.innerHTML = `✅ Pedido <strong>${result.pedido.id_pedido}</strong> enviado correctamente!`;
+                    statusMessage.className = 'status-message success';
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                statusMessage.innerHTML = `❌ Error: ${error.message}`;
+                statusMessage.className = 'status-message error';
+            } finally {
+                button.disabled = false;
+                button.textContent = '🎯 Realizar Pedido';
+                
+                // Limpiar mensaje después de 5 segundos
+                setTimeout(() => {
+                    statusMessage.innerHTML = '';
+                    statusMessage.className = 'status-message';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
